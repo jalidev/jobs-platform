@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wasla — Jobs Platform</title>
+<style>
+  :root{--bg:#0b0d10;--panel:#12151b;--panel2:#171b23;--line:#232936;--txt:#e8ecf3;--dim:#8b93a3;--lime:#c8f542;--blue:#5aa2ff;--radius:14px}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--txt);font-family:"Inter","Segoe UI",system-ui,-apple-system,sans-serif}
+  header{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;padding:15px 26px;background:rgba(11,13,16,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .logo{font-weight:900;font-size:22px;letter-spacing:-.8px}.logo span{color:var(--lime)}
+  .post{margin-left:auto;background:var(--lime);color:#0b0d10;border:none;font-weight:800;padding:10px 20px;border-radius:999px;cursor:pointer;font-size:14px}
+  .hero{padding:64px 26px 40px;text-align:center}
+  .hero h1{font-size:clamp(32px,5vw,54px);letter-spacing:-2px;font-weight:900;margin-bottom:12px}
+  .hero h1 em{font-style:normal;color:transparent;-webkit-text-stroke:1.4px var(--lime)}
+  .hero p{color:var(--dim);max-width:480px;margin:0 auto;font-size:15px;line-height:1.6}
+  .search{max-width:760px;margin:30px auto 0;display:flex;gap:10px;flex-wrap:wrap}
+  .search input,.search select{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 15px;color:var(--txt);font-size:14px;outline:none}
+  .search input{flex:2;min-width:200px}
+  .search select{flex:1;min-width:140px}
+  .search input:focus,.search select:focus{border-color:var(--lime)}
+  .wrap{max-width:900px;margin:0 auto;padding:34px 22px 60px}
+  .count{color:var(--dim);font-size:13px;margin-bottom:14px}
+  .job{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;margin-bottom:12px;cursor:pointer;transition:transform .15s,border-color .15s;display:flex;gap:16px;align-items:center}
+  .job:hover{transform:translateY(-2px);border-color:#3a4152}
+  .jmark{width:48px;height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0}
+  .job .info{flex:1;min-width:0}
+  .job h3{font-size:16px;margin-bottom:3px}
+  .job .meta{color:var(--dim);font-size:13px}
+  .tags{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap}
+  .tag{font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;background:rgba(200,245,66,.12);color:var(--lime);white-space:nowrap}
+  .tag.type{background:rgba(90,162,255,.13);color:var(--blue)}
+  /* modal */
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;z-index:40}
+  .scrim.show{display:block}
+  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:50;padding:18px}
+  .modal.show{display:flex}
+  .mbox{background:var(--panel);border:1px solid var(--line);border-radius:18px;max-width:520px;width:100%;padding:26px;max-height:86vh;overflow-y:auto}
+  .mbox h2{font-size:21px;letter-spacing:-.5px;margin-bottom:6px}
+  .mbox .meta{color:var(--dim);font-size:13.5px;margin-bottom:16px}
+  .mbox p.desc{font-size:14.5px;line-height:1.65;color:var(--txt);margin-bottom:18px}
+  .apply{width:100%;background:var(--lime);color:#0b0d10;border:none;padding:14px;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer}
+  .close{width:100%;margin-top:8px;background:var(--panel2);color:var(--txt);border:1px solid var(--line);padding:12px;border-radius:12px;font-weight:700;cursor:pointer}
+  /* post form */
+  .fgrid{display:grid;gap:12px;margin-bottom:16px}
+  .fgrid input,.fgrid select,.fgrid textarea{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 13px;color:var(--txt);font-size:14px;outline:none;width:100%;font-family:inherit}
+  .fgrid textarea{min-height:90px;resize:vertical}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(90px);background:var(--lime);color:#0b0d10;font-weight:700;padding:12px 22px;border-radius:999px;transition:transform .25s;z-index:60;font-size:14px}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  @media(max-width:640px){.job{flex-wrap:wrap}.tags{width:100%}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">WASLA<span>.</span></div>
+  <button class="post" onclick="openPost()">Post a job</button>
+</header>
+<section class="hero">
+  <h1>Work finds you <em>here</em>.</h1>
+  <p>Connecting job seekers with employers across Chad — from N'Djamena to every region.</p>
+  <div class="search">
+    <input id="q" placeholder="Role, skill or company..." oninput="render()">
+    <select id="city" onchange="render()"><option value="">All cities</option></select>
+    <select id="type" onchange="render()"><option value="">Any type</option><option>Full-time</option><option>Part-time</option><option>Contract</option><option>Remote</option></select>
+  </div>
+</section>
+<div class="wrap">
+  <div class="count" id="count"></div>
+  <div id="jobs"></div>
+</div>
+
+<div class="scrim" id="scrim" onclick="closeAll()"></div>
+<div class="modal" id="detail">
+  <div class="mbox" id="detailBox"></div>
+</div>
+<div class="modal" id="post">
+  <div class="mbox">
+    <h2>Post a job</h2>
+    <div class="meta">It goes live immediately (demo).</div>
+    <div class="fgrid">
+      <input id="p-title" placeholder="Job title *">
+      <input id="p-company" placeholder="Company *">
+      <select id="p-city"><option value="">City *</option></select>
+      <select id="p-type"><option>Full-time</option><option>Part-time</option><option>Contract</option><option>Remote</option></select>
+      <input id="p-salary" placeholder="Salary (e.g. 250,000 FCFA / month)">
+      <textarea id="p-desc" placeholder="Describe the role..."></textarea>
+    </div>
+    <button class="apply" onclick="postJob()">Publish job</button>
+    <button class="close" onclick="closeAll()">Cancel</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const CITIES=["N'Djamena","Moundou","Sarh","Abéché","Remote"];
+const COLORS=["#c8f542","#5aa2ff","#ffb84d","#6bd0ff","#b18cff","#ff8a5c"];
+const JOBS=[
+ {t:"Full-Stack Web Developer",c:"Sahel Tech",city:"N'Djamena",type:"Full-time",sal:"450,000 FCFA / month",d:"Build and maintain client web platforms: Laravel backends, React front ends, MySQL data models. Two years of production experience preferred."},
+ {t:"Android Developer",c:"Wasla Labs",city:"N'Djamena",type:"Full-time",sal:"500,000 FCFA / month",d:"Own our Android app end to end: Kotlin, REST integration, offline-first sync for low-connectivity regions."},
+ {t:"Accountant",c:"Nouri Trading",city:"Moundou",type:"Full-time",sal:"300,000 FCFA / month",d:"Daily bookkeeping, supplier balances and monthly reporting for a distribution business."},
+ {t:"Pharmacy Manager",c:"Al-Shifa Pharmacy",city:"Sarh",type:"Full-time",sal:"350,000 FCFA / month",d:"Run inventory, sales and supplier orders. Experience with pharmacy management systems is a plus."},
+ {t:"UI Designer",c:"Studio Kali",city:"Remote",type:"Contract",sal:"Per project",d:"Design marketing sites and dashboards. Strong typography and responsive layout skills; Figma required."},
+ {t:"Network Technician (MikroTik)",c:"NetLink Services",city:"N'Djamena",type:"Contract",sal:"280,000 FCFA / month",d:"Install and configure MikroTik hotspots, user cards and bandwidth policies for cafes and offices."},
+ {t:"Sales Representative",c:"Dala Foods",city:"Abéché",type:"Part-time",sal:"Commission + base",d:"Grow wholesale accounts in the eastern region. Own transport preferred."},
+ {t:"English-French Translator",c:"Horizon NGO",city:"Remote",type:"Remote",sal:"Per document",d:"Translate program documents between English and French; Arabic is a bonus."},
+];
+let jobs=[...JOBS];
+const $=id=>document.getElementById(id);
+function mark(c,i){return `<div class="jmark" style="background:${COLORS[i%COLORS.length]}22;color:${COLORS[i%COLORS.length]}">${c.split(" ").map(w=>w[0]).slice(0,2).join("")}</div>`}
+function render(){
+ const q=$("q").value.toLowerCase(),city=$("city").value,type=$("type").value;
+ const list=jobs.map((j,i)=>({j,i})).filter(({j})=>(!city||j.city===city)&&(!type||j.type===type)&&(j.t+j.c+j.d).toLowerCase().includes(q));
+ $("count").textContent=list.length+" open role"+(list.length===1?"":"s");
+ $("jobs").innerHTML=list.map(({j,i})=>`<div class="job" onclick="openJob(${i})">
+  ${mark(j.c,i)}
+  <div class="info"><h3>${j.t}</h3><div class="meta">${j.c} · ${j.city} · ${j.sal}</div></div>
+  <div class="tags"><span class="tag type">${j.type}</span></div></div>`).join("")
+  ||'<div style="color:var(--dim);text-align:center;padding:40px">No roles match your search.</div>';
+}
+function openJob(i){const j=jobs[i];
+ $("detailBox").innerHTML=`${mark(j.c,i)}<h2 style="margin-top:14px">${j.t}</h2>
+  <div class="meta">${j.c} · ${j.city} · ${j.type} · ${j.sal}</div>
+  <p class="desc">${j.d}</p>
+  <button class="apply" onclick="closeAll();toast('Application sent (demo)')">Apply now</button>
+  <button class="close" onclick="closeAll()">Close</button>`;
+ $("scrim").classList.add("show");$("detail").classList.add("show")}
+function openPost(){$("scrim").classList.add("show");$("post").classList.add("show")}
+function closeAll(){$("scrim").classList.remove("show");$("detail").classList.remove("show");$("post").classList.remove("show")}
+function postJob(){
+ const t=$("p-title").value.trim(),c=$("p-company").value.trim(),city=$("p-city").value;
+ if(!t||!c||!city)return toast("Title, company and city are required");
+ jobs.unshift({t,c,city,type:$("p-type").value,sal:$("p-salary").value.trim()||"Negotiable",d:$("p-desc").value.trim()||"No description provided."});
+ ["p-title","p-company","p-city","p-salary","p-desc"].forEach(id=>$(id).value="");
+ closeAll();render();toast("Job published (demo)");
+}
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),1800)}
+$("city").innerHTML='<option value="">All cities</option>'+CITIES.map(c=>`<option>${c}</option>`).join("");
+$("p-city").innerHTML='<option value="">City *</option>'+CITIES.map(c=>`<option>${c}</option>`).join("");
+render();
+</script>
+</body>
+</html>
